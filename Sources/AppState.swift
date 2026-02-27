@@ -38,6 +38,11 @@ class AppState: ObservableObject {
             vfLog("[AppState] Microphone permission: \(granted ? "granted" : "denied")")
         }
 
+        // Prompt for Accessibility permission if not granted
+        let options = [kAXTrustedCheckOptionPrompt.takeUnretainedValue(): true] as CFDictionary
+        let trusted = AXIsProcessTrustedWithOptions(options)
+        vfLog("[AppState] Accessibility trusted: \(trusted)")
+
         // Initialize Hotkeys
         hotKey = HotKey(key: .v, modifiers: [.command, .option])
         hotKeyEnglish = HotKey(key: .b, modifiers: [.command, .option])
