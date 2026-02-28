@@ -21,12 +21,14 @@ func vfLog(_ message: String) {
 class AppState: ObservableObject {
     @Published var isRecording = false
     @Published var statusMessage = "Idle"
-    
+    @Published var bypassPermissions = false
+
     private let recorder = AudioRecorder()
     private let transcriber = TranscriptionService()
     private let injector = TextInjector()
     private var hotKey: HotKey?
     private var hotKeyEnglish: HotKey?
+    private var hotKeyBypass: HotKey?
     private var cancellables = Set<AnyCancellable>()
 
     private var recordingURL: URL?
@@ -46,7 +48,8 @@ class AppState: ObservableObject {
         // Initialize Hotkeys
         hotKey = HotKey(key: .v, modifiers: [.command, .option])
         hotKeyEnglish = HotKey(key: .b, modifiers: [.command, .option])
-        vfLog("[AppState] HotKeys registered: Cmd+Option+V (中文), Cmd+Option+B (English)")
+        hotKeyBypass = HotKey(key: .tab, modifiers: [.shift])
+        vfLog("[AppState] HotKeys registered: Cmd+Option+V (中文), Cmd+Option+B (English), Shift+Tab (bypass cycle)")
         setupHandlers()
 
         statusMessage = "Loading model..."
@@ -71,7 +74,20 @@ class AppState: ObservableObject {
             self?.transcriptionLanguage = "en"
             self?.toggleRecording()
         }
-        
+
+        hotKeyBypass?.keyDownHandler = { [weak self] in
+            guard let self = self else { return }
+            self.bypassPermissions.toggle()
+            self.injector.bypassPermissions = self.bypassPermissions
+            let label = self.bypassPermissions ? "Bypass ON (Clipboard only)" : "Bypass OFF (Auto-paste)"
+            self.statusMessage = label
+            vfLog("[AppState] \(label)")
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2) { [weak self] in
+                guard let self = self, !self.isRecording else { return }
+                self.statusMessage = self.bypassPermissions ? "Ready (Bypass)" : "Ready"
+            }
+        }
+
         // Listen to transcriber results
         transcriber.$transcribedText
             .receive(on: RunLoop.main)

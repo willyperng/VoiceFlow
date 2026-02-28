@@ -2,6 +2,8 @@ import Foundation
 import AppKit
 
 class TextInjector {
+    var bypassPermissions = false
+
     func inject(text: String) {
         vfLog("[TextInjector] Injecting text: \(text)")
 
@@ -10,6 +12,12 @@ class TextInjector {
         pasteboard.clearContents()
         pasteboard.setString(text, forType: .string)
         vfLog("[TextInjector] Clipboard set")
+
+        // Bypass mode: clipboard only, no auto-paste
+        if bypassPermissions {
+            vfLog("[TextInjector] Bypass mode ON — skipping auto-paste")
+            return
+        }
 
         // 2. Check Accessibility permission
         let trusted = AXIsProcessTrusted()

@@ -19,6 +19,8 @@ struct VoiceFlowApp: App {
     var body: some Scene {
         MenuBarExtra("VoiceFlow", systemImage: "mic.fill") {
             Text("Status: \(appState.statusMessage)")
+            Text(appState.bypassPermissions ? "Mode: Clipboard Only" : "Mode: Auto-paste")
+                .foregroundStyle(appState.bypassPermissions ? .orange : .secondary)
             Divider()
             Toggle("Launch at Login", isOn: Binding(
                 get: { launchAtLogin },
